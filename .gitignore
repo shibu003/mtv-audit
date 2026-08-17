@@ -1,0 +1,34 @@
+# --- D-0 (MTV_SPEC_v2.0_addendum_A §A): keep real-session data & secrets out ---
+# Real-session-derived artifacts (receipts built from a customer's actual log).
+reports/*_real*
+# Session logs are real customer data and/or large regenerable fixtures.
+*.jsonl
+# D-α live-run artifacts (real transcripts + founder-filled results).
+runs/
+results*.json
+# Credentials / secrets — never commit.
+*.env
+.env*
+*_credentials*
+*.key
+*.pem
+.ssh/
+# --- noise ---
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.DS_Store
+build/
+dist/
+.venv/
+.venv*/
+venv/
+
+# 実験ログ・開発メモ (public repo には置かない)
+MTV_META_PROMPT.md
+MTV_SPEC_v1.1.md
+D_ALPHA_RUNBOOK.md
+reports/dalpha_*
+reports/seeds/
+reports/*.mcp.json
