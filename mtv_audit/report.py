@@ -11,6 +11,7 @@ import datetime as _dt
 from .attribution import ALL_CHANNELS, RECOVERABLE_CHANNELS, Ledger
 from .model import Session
 from .pricing import PriceBook
+from .pricing import PRICE_TABLE_VERSION
 from .redact import scrub, scrub_path
 from .replay import ReplayResult
 
@@ -32,7 +33,6 @@ def _fmt_tok(x: float) -> str:
     return f"{int(round(x)):,}"
 
 
-PRICE_TABLE_VERSION = "2026-06-11"  # bump when DEFAULT_PRICES changes
 
 
 def render_receipt(session: Session, ledgers: dict[str, Ledger],

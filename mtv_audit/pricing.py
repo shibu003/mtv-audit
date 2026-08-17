@@ -30,6 +30,8 @@ from dataclasses import dataclass
 # model id, so specific keys must precede the general ones they extend:
 # "sonnet-5" before "sonnet", or every Sonnet 5 turn prices at the 4.6 rate.
 # Keep that invariant when editing this table or a --price-config file.
+PRICE_TABLE_VERSION = "2026-06-11"  # bump when DEFAULT_PRICES changes
+
 DEFAULT_PRICES: dict[str, dict[str, float]] = {
     # Fable/Mythos 5 — above Opus. Without these they fell through to
     # "default" and priced at 3/15, a 3.3x under-count of the real 10/50.

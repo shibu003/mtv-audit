@@ -14,6 +14,7 @@ from .attribution import DIALS, audit_all_dials
 from .parser import load_session
 from .pricing import PriceBook
 from .replay import StubReplayRunner
+from .receipt import dump_receipt
 from .report import render_receipt
 
 
@@ -29,6 +30,9 @@ def build_argparser() -> argparse.ArgumentParser:
                     help="JSON price table overriding built-in placeholder defaults")
     ap.add_argument("-o", "--output", default=None,
                     help="write receipt markdown here (default: stdout)")
+    ap.add_argument("--json", action="store_true",
+                    help="emit the machine-readable receipt "
+                         "(schema/receipt-v1.schema.json) instead of markdown")
     ap.add_argument("--data-provenance",
                     choices=["fixture", "real"],
                     default=None,
@@ -55,10 +59,16 @@ def main(argv: list[str] | None = None) -> int:
     runner = StubReplayRunner()
     plan = runner.plan(session, ledgers[args.dial])
     replay_result = runner.run(session, plan)
-    receipt = render_receipt(session, ledgers, book, detail_dial=args.dial,
-                             sessions_per_month=args.sessions_per_month,
-                             replay=replay_result,
-                             data_provenance=provenance)
+    if args.json:
+        receipt = dump_receipt(session, ledgers, book, detail_dial=args.dial,
+                               sessions_per_month=args.sessions_per_month,
+                               replay=replay_result,
+                               data_provenance=provenance)
+    else:
+        receipt = render_receipt(session, ledgers, book, detail_dial=args.dial,
+                                 sessions_per_month=args.sessions_per_month,
+                                 replay=replay_result,
+                                 data_provenance=provenance)
     if args.output:
         with open(args.output, "w", encoding="utf-8") as fh:
             fh.write(receipt)

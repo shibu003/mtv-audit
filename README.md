@@ -81,6 +81,38 @@ tests/            per-rule unit tests + end-to-end (67 tests)
 reports/          generated receipts
 ```
 
+## Machine-readable receipts
+
+```bash
+python -m mtv_audit.cli SESSION.jsonl --json
+```
+
+emits the same audit as JSON against
+[`schema/receipt-v1.schema.json`](schema/receipt-v1.schema.json) — for a CI
+gate, a dashboard, or another agent runtime that wants to emit MTV receipts of
+its own.
+
+Two properties make the schema worth implementing rather than inventing your
+own shape:
+
+- **No free text.** Every field is a number, an identifier, or a bounded enum.
+  That is what lets a receipt be shared without a redaction pass — there is
+  nothing in it to redact. `tests/test_receipt_json.py` walks every string in
+  an emitted receipt and fails if prose appears.
+- **Every channel key is always present**, with zeros when a rule found
+  nothing. An absent key would be indistinguishable from a rule that never ran.
+
+If you emit receipts from another tool, set the `emitter` block:
+
+```json
+{ "emitter": { "name": "your-tool", "version": "1.2.0" } }
+```
+
+Invariants the schema states and the tests enforce: `recoverable.verified` is
+false until a counterfactual replay says otherwise, and dial totals stay
+monotonic (`saver >= balanced >= optimizer`) — a stricter dial never claims
+less waste than a looser one.
+
 ## Local-first, and what a receipt may contain
 
 A session log is one of the most sensitive files on a developer's disk:

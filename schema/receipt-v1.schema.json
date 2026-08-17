@@ -1,0 +1,160 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/shibu003/mtv-audit/schema/receipt-v1.schema.json",
+  "title": "MTV waste audit receipt, version 1",
+  "description": "A machine-readable statement of where an agent session's tokens went and how much of that was waste. The markdown receipt is the human view of this same object.\n\nEvery field here is a number, an identifier, or a bounded enum. There is deliberately no free text: a receipt is meant to be shareable, and prompts, code and paths stay on the machine that produced it.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "session", "totals", "channels", "recoverable"],
+  "properties": {
+    "schema_version": {
+      "const": 1,
+      "description": "Bumped only for a breaking change. New optional fields do not bump it."
+    },
+    "session": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "turns", "assistant_turns", "data_provenance"],
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Session identifier as recorded by the agent runtime."
+        },
+        "source_filename": {
+          "type": "string",
+          "description": "Filename only, never a path. The directory above a session log routinely names an employer, a client, or an unreleased product."
+        },
+        "turns": { "type": "integer", "minimum": 0 },
+        "assistant_turns": { "type": "integer", "minimum": 0 },
+        "audited_on": {
+          "type": "string",
+          "format": "date",
+          "description": "Date the audit ran, not the date the session happened."
+        },
+        "data_provenance": {
+          "enum": ["fixture", "redacted-real"],
+          "description": "'redacted-real' is derived, not asserted: redaction is unconditional, so the value states what the tool did. Anything produced from a synthetic fixture is 'fixture'."
+        }
+      }
+    },
+    "totals": {
+      "type": "object",
+      "description": "What the run cost in total, before any waste attribution.",
+      "additionalProperties": false,
+      "required": ["grand_total_tokens", "usd"],
+      "properties": {
+        "input_tokens": { "type": "integer", "minimum": 0 },
+        "output_tokens": { "type": "integer", "minimum": 0 },
+        "cache_read_input_tokens": { "type": "integer", "minimum": 0 },
+        "cache_creation_input_tokens": { "type": "integer", "minimum": 0 },
+        "prompt_total_tokens": { "type": "integer", "minimum": 0 },
+        "grand_total_tokens": { "type": "integer", "minimum": 0 },
+        "usd": {
+          "type": "number",
+          "minimum": 0,
+          "description": "Blended across cache rates. Depends on the price table — see price_table_version."
+        },
+        "price_table_version": { "type": "string" }
+      }
+    },
+    "channels": {
+      "type": "object",
+      "description": "Waste attributed per spend channel. Every channel key is always present, with zeros when the rule found nothing — an absent key would be indistinguishable from a rule that did not run.",
+      "additionalProperties": false,
+      "required": ["retry", "clean", "comm", "deep", "stop", "model"],
+      "properties": {
+        "retry": { "$ref": "#/$defs/channel" },
+        "clean": { "$ref": "#/$defs/channel" },
+        "comm": { "$ref": "#/$defs/channel" },
+        "deep": { "$ref": "#/$defs/channel" },
+        "stop": { "$ref": "#/$defs/channel" },
+        "model": { "$ref": "#/$defs/channel" }
+      }
+    },
+    "recoverable": {
+      "type": "object",
+      "description": "What could plausibly have been avoided. An upper bound until a counterfactual replay confirms it.",
+      "additionalProperties": false,
+      "required": ["dial", "usd", "percent_of_total", "verified"],
+      "properties": {
+        "dial": { "$ref": "#/$defs/dial" },
+        "usd": { "type": "number", "minimum": 0 },
+        "percent_of_total": { "type": "number", "minimum": 0, "maximum": 100 },
+        "verified": {
+          "type": "boolean",
+          "description": "False means this is an estimate, not a measured saving. The 'model' channel is excluded from the total until a replay on a cheaper model confirms it."
+        },
+        "replay_status": {
+          "enum": ["NOT_RUN", "PASSED", "FAILED"],
+          "description": "NOT_RUN is the honest default: the counterfactual replay runner is an interface with a stub implementation."
+        }
+      }
+    },
+    "projection": {
+      "type": "object",
+      "description": "Monthly extrapolation. Assumption-driven, so it is optional and carries its assumption.",
+      "additionalProperties": false,
+      "required": ["sessions_per_month", "by_dial"],
+      "properties": {
+        "sessions_per_month": { "type": "integer", "minimum": 1 },
+        "by_dial": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "saver": { "type": "number", "minimum": 0 },
+            "balanced": { "type": "number", "minimum": 0 },
+            "optimizer": { "type": "number", "minimum": 0 }
+          }
+        }
+      }
+    },
+    "top_items": {
+      "type": "array",
+      "description": "The largest individual sources of waste. Identified by block id and turn range so they can be located in the local log — never by their content.",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["channel", "block_id", "tokens", "usd"],
+        "properties": {
+          "channel": { "$ref": "#/$defs/channelName" },
+          "block_id": { "type": "string" },
+          "repeat": { "type": "integer", "minimum": 1 },
+          "turn_span": { "type": "string" },
+          "tokens": { "type": "number", "minimum": 0 },
+          "usd": { "type": "number", "minimum": 0 }
+        }
+      }
+    },
+    "emitter": {
+      "type": "object",
+      "description": "Who produced this receipt. Set by tools other than mtv-audit that implement this schema.",
+      "additionalProperties": false,
+      "required": ["name", "version"],
+      "properties": {
+        "name": { "type": "string" },
+        "version": { "type": "string" }
+      }
+    }
+  },
+  "$defs": {
+    "channelName": {
+      "enum": ["retry", "clean", "comm", "deep", "stop", "model"],
+      "description": "retry: a failure trace re-sent after the tool already failed.\nclean: stale context re-read — blocks no longer relevant to the goal.\ncomm: full-state rebroadcast where a diff would have done.\ndeep: thinking spent on a step that did not need it.\nstop: tokens spent after the job was already done.\nmodel: a trivial step sent to the top-tier model. Flagged, never counted as recoverable without a replay."
+    },
+    "dial": {
+      "enum": ["saver", "balanced", "optimizer"],
+      "description": "How aggressively a rule calls something waste. Totals must be monotonic across them: saver >= balanced >= optimizer. A stricter dial never claims less waste than a looser one."
+    },
+    "channel": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["tokens", "usd", "count"],
+      "properties": {
+        "tokens": { "type": "number", "minimum": 0 },
+        "usd": { "type": "number", "minimum": 0 },
+        "count": { "type": "integer", "minimum": 0 },
+        "percent_of_total": { "type": "number", "minimum": 0, "maximum": 100 }
+      }
+    }
+  }
+}
