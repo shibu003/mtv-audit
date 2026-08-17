@@ -16,7 +16,7 @@ python -m mtv_audit.cli fixtures/session_fixture.jsonl \
     --dial balanced --sessions-per-month 100 \
     -o reports/sample_receipt.md
 
-python -m pytest tests/ -q                             # 26 tests, all green
+python -m pytest tests/ -q                             # 54 tests, all green
 ```
 
 Input: a Claude Code session JSONL (`~/.claude/projects/.../*.jsonl`).
@@ -69,12 +69,18 @@ Once a replay passes, the receipt's "upper-bound estimate" becomes a
 ```
 mtv_audit/        core package (model, parser, pricing, attribution, report, replay, synth, cli)
 fixtures/         deterministic fixture generator + generated JSONL
-tests/            per-rule unit tests + end-to-end (26 tests)
+tests/            per-rule unit tests + end-to-end (54 tests)
 reports/          generated receipts
 ```
 
 ## License
 
-**Distribution decision pending — see founder decision D3** (open spec /
-closed engine is the current recommendation). No LICENSE file is included
-until that decision is made; all rights reserved in the interim.
+**GNU Affero General Public License v3.0** — see [LICENSE](LICENSE).
+
+You are free to run, study, modify and share mtv-audit. If you offer a
+modified version to others over a network, the AGPL requires you to make
+your modified source available to those users under the same terms.
+
+Copyright (c) 2026 shibu003. The copyright is held in full by the author,
+so a **separate commercial licence** can be granted to organisations that
+cannot comply with the AGPL — open an issue if you need one.
