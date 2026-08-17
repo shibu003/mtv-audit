@@ -75,12 +75,9 @@ reports/          generated receipts
 
 ## License
 
-**GNU Affero General Public License v3.0** — see [LICENSE](LICENSE).
+**Apache License 2.0** — see [LICENSE](LICENSE).
 
-You are free to run, study, modify and share mtv-audit. If you offer a
-modified version to others over a network, the AGPL requires you to make
-your modified source available to those users under the same terms.
+Use it, modify it, ship it commercially, host it. The patent grant matters
+here: the attribution channels are meant to be implemented by other tools.
 
-Copyright (c) 2026 shibu003. The copyright is held in full by the author,
-so a **separate commercial licence** can be granted to organisations that
-cannot comply with the AGPL — open an issue if you need one.
+Contributions need a sign-off: see [CLA.md](CLA.md).

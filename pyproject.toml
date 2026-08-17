@@ -3,7 +3,7 @@ name = "mtv-audit"
 version = "0.1.0"
 description = "MTV (Marginal Token Value) waste audit for agent session logs — Stage 1 of the MTV business"
 requires-python = ">=3.10"
-license = "AGPL-3.0-only"
+license = "Apache-2.0"
 license-files = ["LICENSE"]
 dependencies = []
 
