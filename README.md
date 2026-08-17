@@ -16,7 +16,7 @@ python -m mtv_audit.cli fixtures/session_fixture.jsonl \
     --dial balanced --sessions-per-month 100 \
     -o reports/sample_receipt.md
 
-python -m pytest tests/ -q                             # 54 tests, all green
+python -m pytest tests/ -q                             # 67 tests, all green
 ```
 
 Input: a Claude Code session JSONL (`~/.claude/projects/.../*.jsonl`).
@@ -28,13 +28,21 @@ The parser is tolerant: unknown line types are skipped and counted.
 python -m mtv_audit.cli SESSION.jsonl
     --dial {saver,balanced,optimizer}   λ(U) dial for the detailed ledger (default: balanced)
     --sessions-per-month N              monthly projection assumption (default: 100)
-    --price-config prices.json          override built-in placeholder price table
+    --price-config prices.json          override the built-in price table
     -o receipt.md                       output path (default: stdout)
 ```
 
-**Pricing:** the built-in table is a *placeholder default*. Verify against the
-official price list (https://docs.claude.com → pricing) or pass
-`--price-config` before any customer-facing report.
+**Pricing:** the built-in table was checked against the published price list on
+2026-08-17 (platform.claude.com → pricing). Prices still change, so re-check it,
+or pass `--price-config`, before any customer-facing report — `tests/test_pricing.py`
+pins the current figures so a stale table fails the suite rather than quietly
+producing a plausible wrong number.
+
+Two things the table cannot infer from a transcript, and does not pretend to:
+a 1-hour-TTL cache write costs 2x base input rather than the 1.25x used here
+(the log does not record which TTL was used), and matching is by substring, so
+a new model whose id extends an existing key needs its own entry *above* that
+key — see the ordering note in `mtv_audit/pricing.py`.
 
 ## Attribution rules (→ §6 of MTV_META_PROMPT.md)
 
@@ -69,7 +77,7 @@ Once a replay passes, the receipt's "upper-bound estimate" becomes a
 ```
 mtv_audit/        core package (model, parser, pricing, attribution, report, replay, synth, cli)
 fixtures/         deterministic fixture generator + generated JSONL
-tests/            per-rule unit tests + end-to-end (54 tests)
+tests/            per-rule unit tests + end-to-end (67 tests)
 reports/          generated receipts
 ```
 
