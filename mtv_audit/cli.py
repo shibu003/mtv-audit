@@ -30,7 +30,7 @@ def build_argparser() -> argparse.ArgumentParser:
     ap.add_argument("-o", "--output", default=None,
                     help="write receipt markdown here (default: stdout)")
     ap.add_argument("--data-provenance",
-                    choices=["fixture", "real", "redacted-real"],
+                    choices=["fixture", "real"],
                     default=None,
                     help="data provenance tag for the receipt (auto-detected if omitted)")
     return ap
@@ -44,9 +44,13 @@ def main(argv: list[str] | None = None) -> int:
         print("error: no assistant turns found — is this a Claude Code session JSONL?",
               file=sys.stderr)
         return 2
+    # Redaction is unconditional, so "redacted-" is a fact about how the
+    # receipt was produced, not a claim the caller makes about the input.
     provenance = args.data_provenance or (
         "fixture" if "fixture" in args.session else "real"
     )
+    if provenance != "fixture":
+        provenance = f"redacted-{provenance}"
     ledgers = audit_all_dials(session, book)
     runner = StubReplayRunner()
     plan = runner.plan(session, ledgers[args.dial])

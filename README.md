@@ -81,6 +81,46 @@ tests/            per-rule unit tests + end-to-end (67 tests)
 reports/          generated receipts
 ```
 
+## Local-first, and what a receipt may contain
+
+A session log is one of the most sensitive files on a developer's disk:
+prompts, source code, tool output, filesystem paths, and whatever secrets got
+echoed along the way. mtv-audit reads all of it — **on your machine, and
+nowhere else**. There is no upload, no telemetry, no network call in the audit
+path. Python standard library only, so there is no dependency that could add
+one behind your back.
+
+What comes out is a receipt, and a receipt is meant to be shareable — pasted
+into a ticket, sent to a vendor, attached to an invoice. So the receipt carries
+numbers, not your session:
+
+| On the receipt | Not on the receipt |
+|---|---|
+| token counts, costs, percentages | prompts, code, tool output |
+| channel attribution and repeat counts | the directory your project lives in |
+| block ids, turn ranges | credentials of any shape |
+| the session filename | the path above it |
+
+The one free-text surface is the Top-10 excerpt column, and every excerpt is
+scrubbed by `mtv_audit/redact.py` before it can reach the page: API keys, JWTs,
+credentials embedded in URLs, `KEY=value` assignments, email addresses, and
+home-directory paths are replaced with markers. The source path is reduced to
+its filename, because the tree above a session log routinely names the
+employer, the client, or the unreleased product.
+
+Redaction is **unconditional** — it is not a flag you can forget. That is why
+the receipt header reads `data_provenance: redacted-real`: it is a statement
+about how the receipt was produced, not a claim you made about the input.
+
+`tests/test_redact.py` holds this in place end to end — it plants credentials
+in a session and asserts none survive into the rendered receipt. Turn the
+scrubbing off and it goes red.
+
+**Honest limit:** redaction is pattern-based. It catches credential *shapes*.
+A secret that looks like ordinary prose — a password that is a dictionary word,
+a customer's name — will not be caught by any regex. Read a receipt before you
+send it to someone who should not see the underlying work.
+
 ## License
 
 **Apache License 2.0** — see [LICENSE](LICENSE).

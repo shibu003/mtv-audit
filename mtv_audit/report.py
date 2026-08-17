@@ -11,6 +11,7 @@ import datetime as _dt
 from .attribution import ALL_CHANNELS, RECOVERABLE_CHANNELS, Ledger
 from .model import Session
 from .pricing import PriceBook
+from .redact import scrub, scrub_path
 from .replay import ReplayResult
 
 CHANNEL_JA = {
@@ -50,7 +51,8 @@ def render_receipt(session: Session, ledgers: dict[str, Ledger],
     a = lines.append
     a("# MTV無駄監査 領収書（Waste Audit Receipt）")
     a("")
-    a(f"- セッション: `{session.meta.get('session_id', 'unknown')}`  /  ソース: `{session.source_path}`")
+    a(f"- セッション: `{session.meta.get('session_id', 'unknown')}`"
+      f"  /  ソース: `{scrub_path(session.source_path)}`")
     a(f"- 監査日: {_dt.date.today().isoformat()}  /  詳細台帳のダイヤル: **{detail_dial}**")
     a(f"- ターン数: {len(session.turns)}（うちアシスタント {len(session.assistant_turns())}）")
     a(f"- **data_provenance: {data_provenance}**  /  price_table_version: {PRICE_TABLE_VERSION}")
@@ -85,7 +87,7 @@ def render_receipt(session: Session, ledgers: dict[str, Ledger],
     a("| # | チャネル | 対象ブロック | 再送回数 | ターン範囲 | トークン | 金額 | 抜粋 |")
     a("|---|---|---|---:|---|---:|---:|---|")
     for i, item in enumerate(detail.top_items(10), 1):
-        ex = item["excerpt"].replace("|", "\\|")
+        ex = scrub(item["excerpt"]).replace("|", "\\|")
         a(f"| {i} | {item['channel']} | `{item['block_id']}` | {item['repeat']} | {item['turn_span']} | "
           f"{_fmt_tok(item['tokens'])} | {_fmt_usd(item['usd'])} | {ex}… |")
     a("")
